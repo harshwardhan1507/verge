@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export type MemoryType = 
   | 'COMMITMENT' 
@@ -70,6 +71,9 @@ interface MemoryStore {
   searchMemories: (query: string) => Memory[];
   getPersonMemories: (personId: string) => Memory[];
   getUnresolvedCount: () => number;
+  isLoading: boolean;
+  error: string | null;
+  initialize: () => Promise<void>;
 }
 
 const initialMemories: Memory[] = [];
@@ -88,26 +92,85 @@ export const useMemoryStore = create<MemoryStore>((set, get) => ({
   patterns: initialPatterns,
   unresolvedThreads: initialUnresolvedThreads,
   proactiveSurfaces: initialProactiveSurfaces,
+  isLoading: false,
+  error: null,
 
-  addMemory: (content: string, type: MemoryType, relatedPerson?: string) => {
+  initialize: async () => {
+    if (!isSupabaseConfigured) return;
+    
+    set({ isLoading: true, error: null });
+    try {
+      const { data, error } = await supabase
+        .from('memories')
+        .select('*')
+        .order('timestamp', { ascending: false });
+        
+      if (error) throw error;
+      
+      const mappedMemories: Memory[] = data.map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        content: item.content,
+        timestamp: new Date(item.timestamp),
+        relatedPerson: item.related_person,
+        resolved: item.resolved,
+        threadId: item.thread_id,
+      }));
+      
+      set({ memories: mappedMemories, isLoading: false });
+    } catch (err: any) {
+      console.error('Failed to initialize memories from Supabase:', err);
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  addMemory: async (content: string, type: MemoryType, relatedPerson?: string) => {
     const newMemory: Memory = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       type,
       content,
       timestamp: new Date(),
       relatedPerson,
     };
+    
+    // Optimistic update
     set((state) => ({
       memories: [newMemory, ...state.memories],
     }));
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase.from('memories').insert([{
+          id: newMemory.id,
+          type: newMemory.type,
+          content: newMemory.content,
+          timestamp: newMemory.timestamp.toISOString(),
+          related_person: newMemory.relatedPerson,
+          resolved: newMemory.resolved,
+          thread_id: newMemory.threadId
+        }]);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Failed to save memory to Supabase:', err);
+      }
+    }
   },
 
-  markResolved: (id: string) => {
+  markResolved: async (id: string) => {
     set((state) => ({
       memories: state.memories.map((m) =>
         m.id === id ? { ...m, resolved: true } : m
       ),
     }));
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase.from('memories').update({ resolved: true }).eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Failed to update memory in Supabase:', err);
+      }
+    }
   },
 
   addUpdate: (threadId: string, update: string) => {

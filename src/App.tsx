@@ -9,6 +9,8 @@ import { PeoplePage } from './pages/PeoplePage';
 import { PatternsPage } from './pages/PatternsPage';
 import { UnresolvedPage } from './pages/UnresolvedPage';
 import DemoPage from './pages/DemoPage';
+import { useMemoryStore } from './store/memoryStore';
+import { isSupabaseConfigured } from './lib/supabase';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -21,9 +23,26 @@ function ScrollToTop() {
 }
 
 function App() {
+  const initialize = useMemoryStore(state => state.initialize);
+  const error = useMemoryStore(state => state.error);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   return (
     <BrowserRouter>
       <ScrollToTop />
+      {!isSupabaseConfigured && (
+        <div className="bg-amber-500/10 text-amber-500 p-2 text-center text-sm border-b border-amber-500/20">
+          Database not configured. Memories will be saved locally in this session only. Add your Supabase keys to .env.
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-500/10 text-red-500 p-2 text-center text-sm border-b border-red-500/20">
+          Failed to sync with database: {error}. Using local session data.
+        </div>
+      )}
       <Routes>
         <Route path="/demo" element={<DemoPage />} />
         <Route path="/*" element={<MainLayout />} />
