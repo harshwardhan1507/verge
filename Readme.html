@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MemoryOS — README</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060608;
+    --surface: #0e0e14;
+    --surface2: #14141e;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7c6af7;
+    --accent2: #4f9ef5;
+    --text: #e8e8f0;
+    --muted: #5a5a72;
+    --commitment: #f59e0b;
+    --person: #0ea5e9;
+    --emotion: #f43f5e;
+    --pattern: #a855f7;
+    --event: #22c55e;
+    --unresolved: #f97316;
+    --insight: #14b8a6;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── CANVAS ── */
+  #canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 100px 0 80px;
+    text-align: center;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.6s ease 0.1s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(64px, 12vw, 110px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.2s forwards;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto 40px;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.35s forwards;
+  }
+
+  .hero-sub em {
+    font-style: italic;
+    color: rgba(124,106,247,0.9);
+  }
+
+  /* Badges */
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.45s forwards;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .badge:hover { border-color: var(--accent); color: var(--text); }
+  .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .hero-links {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.7s ease 0.55s forwards;
+  }
+
+  .btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+  }
+  .btn-primary:hover { background: #6a58e8; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    margin: 60px 0;
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 80px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    color: #fff;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #fff;
+  }
+
+  p { color: #9898b0; margin-bottom: 16px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── ABOUT CARD ── */
+  .about-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .about-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  /* ── FEATURES GRID ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    border-color: rgba(124,106,247,0.4);
+    transform: translateY(-2px);
+    background: var(--surface2);
+  }
+  .feature-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .feature-card h3 { font-size: 15px; margin-bottom: 6px; }
+  .feature-card p { font-size: 13px; color: var(--muted); margin: 0; }
+
+  /* ── TECH STACK ── */
+  .stack-section { margin-bottom: 32px; }
+  .stack-section h3 {
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-weight: 400;
+  }
+
+  .tech-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tech-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    transition: all 0.2s;
+  }
+  .tech-pill:hover { border-color: var(--accent); background: var(--surface2); }
+  .tech-pill-icon { font-size: 16px; }
+
+  /* ── MEMORY TYPES ── */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .memory-card {
+    border-radius: 12px;
+    padding: 20px 22px;
+    border: 1px solid transparent;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .memory-card:hover { transform: translateY(-2px); }
+  .memory-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+    border-radius: 12px;
+  }
+
+  .memory-card[data-type="commitment"] { border-color: rgba(245,158,11,0.25); }
+  .memory-card[data-type="commitment"]::before { background: var(--commitment); }
+  .memory-card[data-type="person"] { border-color: rgba(14,165,233,0.25); }
+  .memory-card[data-type="person"]::before { background: var(--person); }
+  .memory-card[data-type="emotion"] { border-color: rgba(244,63,94,0.25); }
+  .memory-card[data-type="emotion"]::before { background: var(--emotion); }
+  .memory-card[data-type="pattern"] { border-color: rgba(168,85,247,0.25); }
+  .memory-card[data-type="pattern"]::before { background: var(--pattern); }
+  .memory-card[data-type="event"] { border-color: rgba(34,197,94,0.25); }
+  .memory-card[data-type="event"]::before { background: var(--event); }
+  .memory-card[data-type="unresolved"] { border-color: rgba(249,115,22,0.25); }
+  .memory-card[data-type="unresolved"]::before { background: var(--unresolved); }
+  .memory-card[data-type="insight"] { border-color: rgba(20,184,166,0.25); }
+  .memory-card[data-type="insight"]::before { background: var(--insight); }
+
+  .memory-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .memory-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .memory-type {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    text-transform: capitalize;
+  }
+  .memory-hex {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .memory-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    background: #0a0a10;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #ff5f57; }
+  .code-dots span:nth-child(2) { background: #febc2e; }
+  .code-dots span:nth-child(3) { background: #28c840; }
+  .code-lang {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .code-block pre {
+    padding: 20px 22px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #c8c8e0;
+  }
+  .code-block pre .kw { color: var(--accent); }
+  .code-block pre .str { color: var(--event); }
+  .code-block pre .cmt { color: var(--muted); font-style: italic; }
+  .code-block pre .cmd { color: var(--accent2); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex;
+    gap: 20px;
+    position: relative;
+    padding-bottom: 32px;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step-left { display: flex; flex-direction: column; align-items: center; }
+  .step-num {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .step-line {
+    width: 1px;
+    flex: 1;
+    background: var(--border);
+    margin-top: 8px;
+  }
+  .step:last-child .step-line { display: none; }
+  .step-content { padding-top: 6px; flex: 1; }
+  .step-content h3 { font-size: 16px; margin-bottom: 6px; }
+
+  /* ── SCRIPTS TABLE ── */
+  .scripts-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .scripts-table th {
+    padding: 12px 18px;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .scripts-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    background: #0a0a10;
+    vertical-align: middle;
+  }
+  .scripts-table tr:last-child td { border-bottom: none; }
+  .scripts-table td:first-child { color: #fff; font-weight: 500; }
+  .scripts-table code {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    background: rgba(79,158,245,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .scripts-table td:last-child { color: var(--muted); }
+
+  /* ── FILE TREE ── */
+  .file-tree {
+    background: #0a0a10;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+  }
+  .tree-dir { color: var(--accent2); }
+  .tree-file { color: #9898b0; }
+  .tree-comment { color: var(--muted); font-style: italic; }
+  .tree-indent { padding-left: 20px; display: block; }
+  .tree-indent2 { padding-left: 40px; display: block; }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 60px 0 0;
+    border-top: 1px solid var(--border);
+  }
+  .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .footer p { font-size: 13px; color: var(--muted); }
+  .footer a { color: var(--accent); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+  }
+  .toc-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .toc ol { padding-left: 0; list-style: none; }
+  .toc li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .toc li:last-child { border-bottom: none; }
+  .toc-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .toc a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--text); }
+
+  /* ── CONTRIBUTING ── */
+  .contribute-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .contribute-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .contribute-n {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    opacity: 0.4;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .contribute-step p { font-size: 13px; color: var(--muted); margin: 0; }
+  .contribute-step h3 { font-size: 14px; margin-bottom: 4px; }
+
+  @media (max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .contribute-grid { grid-template-columns: 1fr; }
+    .memory-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div class="wrapper">
+
+  <!-- ── HERO ── -->
+  <header class="hero">
+    <div class="hero-eyebrow">Hackathon Project · Full-Stack · Open Source</div>
+    <h1 class="hero-title">Memory<br>OS</h1>
+    <p class="hero-sub">Your personal <em>operating system for memory</em> — capture, categorize, and surface everything that shapes you.</p>
+
+    <div class="badges">
+      <span class="badge"><span class="badge-dot" style="background:#61dafb"></span>React 19</span>
+      <span class="badge"><span class="badge-dot" style="background:#3178c6"></span>TypeScript 5.9</span>
+      <span class="badge"><span class="badge-dot" style="background:#646cff"></span>Vite 8</span>
+      <span class="badge"><span class="badge-dot" style="background:#ffffff"></span>Express 5</span>
+      <span class="badge"><span class="badge-dot" style="background:#003b57"></span>SQLite</span>
+      <span class="badge"><span class="badge-dot" style="background:#06b6d4"></span>Tailwind 4</span>
+      <span class="badge"><span class="badge-dot" style="background:#88ce02"></span>GSAP</span>
+      <span class="badge"><span class="badge-dot" style="background:#a855f7"></span>Zustand</span>
+    </div>
+
+    <div class="hero-links">
+      <a href="#getting-started" class="btn btn-primary">Get Started</a>
+      <a href="https://github.com/harshwardhan1507/Hackathon-verge/issues" class="btn btn-ghost">Report Issue</a>
+    </div>
+  </header>
+
+  <!-- ── TOC ── -->
+  <div class="toc reveal section">
+    <div class="toc-title">Table of Contents</div>
+    <ol>
+      <li><span class="toc-num">01</span><a href="#about">About the Project</a></li>
+      <li><span class="toc-num">02</span><a href="#features">Features</a></li>
+      <li><span class="toc-num">03</span><a href="#stack">Tech Stack</a></li>
+      <li><span class="toc-num">04</span><a href="#getting-started">Getting Started</a></li>
+      <li><span class="toc-num">05</span><a href="#structure">Project Structure</a></li>
+      <li><span class="toc-num">06</span><a href="#memory-types">Memory Types</a></li>
+      <li><span class="toc-num">07</span><a href="#scripts">Scripts Reference</a></li>
+      <li><span class="toc-num">08</span><a href="#contributing">Contributing</a></li>
+    </ol>
+  </div>
+
+  <!-- ── ABOUT ── -->
+  <section class="section reveal" id="about">
+    <div class="section-label">01 · About</div>
+    <h2>What is MemoryOS?</h2>
+    <div class="about-card">
+      <p>Our brains are poor at organizing lived experiences. <strong style="color:#fff">MemoryOS</strong> acts as an external brain — a structured, searchable, and visually rich interface for everything that matters to you.</p>
+      <p>Memories are not just "notes." They are typed and color-coded across seven meaningful dimensions: <em style="color:var(--commitment)">commitments</em> you've made, <em style="color:var(--person)">people</em> in your life, <em style="color:var(--emotion)">emotions</em> you've felt, <em style="color:var(--pattern)">patterns</em> you've noticed, <em style="color:var(--event)">events</em> that shaped you, things left <em style="color:var(--unresolved)">unresolved</em>, and <em style="color:var(--insight)">insights</em> you've gained.</p>
+      <p style="margin:0">Built in under 48 hours, MemoryOS combines a high-performance React frontend with a lightweight Node.js/SQLite backend — easy to self-host with zero external database dependencies.</p>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section class="section reveal" id="features">
+    <div class="section-label">02 · Features</div>
+    <h2>What's Inside</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🧠</span>
+        <h3>Typed Memory System</h3>
+        <p>Seven semantic memory types, each with its own visual identity and color system.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💾</span>
+        <h3>Zero-config Persistence</h3>
+        <p>All data stored in a local SQLite database via <code style="font-family:monospace;font-size:12px;color:var(--accent2)">better-sqlite3</code> — no cloud required.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">✨</span>
+        <h3>Smooth Animations</h3>
+        <p>Fluid transitions and micro-interactions powered by GSAP 3.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌐</span>
+        <h3>WebGL Canvas</h3>
+        <p>Immersive visual background rendered with OGL, the lightweight WebGL library.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">⚡</span>
+        <h3>React Compiler</h3>
+        <p>Automatic memoization eliminates unnecessary renders without manual optimization.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🎨</span>
+        <h3>Dark-first Design</h3>
+        <p>Custom Tailwind theme with a deep dark base and vibrant, semantic accent colors.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔒</span>
+        <h3>Accessible Components</h3>
+        <p>Built on Radix UI primitives — dialogs, tooltips, scroll areas, and more.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🗺️</span>
+        <h3>Client-side Routing</h3>
+        <p>Fast SPA navigation with React Router v7, no page reloads.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📦</span>
+        <h3>Monorepo Structure</h3>
+        <p>Express API and Vite frontend co-exist and run concurrently from one repo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TECH STACK ── -->
+  <section class="section reveal" id="stack">
+    <div class="section-label">03 · Stack</div>
+    <h2>Tech Stack</h2>
+
+    <div class="stack-section">
+      <h3>Frontend</h3>
+      <div class="tech-grid">
+        <span class="tech-pill"><span class="tech-pill-icon">⚛️</span> React 19</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🔷</span> TypeScript 5.9</span>
+        <span class="tech-pill"><span class="tech-pill-icon">⚡</span> Vite 8</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🛣️</span> React Router v7</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🐻</span> Zustand 5</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🎨</span> Tailwind CSS v4</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🧩</span> Radix UI</span>
+        <span class="tech-pill"><span class="tech-pill-icon">✨</span> GSAP 3</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🌐</span> OGL (WebGL)</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🔣</span> Lucide Icons</span>
+      </div>
+    </div>
+
+    <div class="stack-section">
+      <h3>Backend</h3>
+      <div class="tech-grid">
+        <span class="tech-pill"><span class="tech-pill-icon">🟢</span> Node.js</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🚂</span> Express v5</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🗄️</span> better-sqlite3</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🔗</span> CORS</span>
+        <span class="tech-pill"><span class="tech-pill-icon">🔄</span> concurrently</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GETTING STARTED ── -->
+  <section class="section reveal" id="getting-started">
+    <div class="section-label">04 · Setup</div>
+    <h2>Getting Started</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <h3>Clone the repository</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">bash</span>
+            </div>
+            <pre><span class="cmd">git clone</span> https://github.com/harshwardhan1507/Hackathon-verge.git
+<span class="cmd">cd</span> Hackathon-verge</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <h3>Install dependencies</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">bash</span>
+            </div>
+            <pre><span class="cmd">npm</span> install</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <h3>Start the full stack (recommended)</h3>
+          <p style="font-size:13px">Runs both the Express API server and the Vite dev server simultaneously.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">bash</span>
+            </div>
+            <pre><span class="cmd">npm</span> run dev:full
+
+<span class="cmt"># Frontend → http://localhost:5173</span>
+<span class="cmt"># Backend  → http://localhost:3000</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">4</div>
+        </div>
+        <div class="step-content">
+          <h3>Build for production</h3>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">bash</span>
+            </div>
+            <pre><span class="cmd">npm</span> run build    <span class="cmt"># Type-check + bundle</span>
+<span class="cmd">npm</span> run preview  <span class="cmt"># Preview production build</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROJECT STRUCTURE ── -->
+  <section class="section reveal" id="structure">
+    <div class="section-label">05 · Structure</div>
+    <h2>Project Structure</h2>
+    <div class="file-tree">
+      <span class="tree-dir">Hackathon-verge/</span>
+      <span class="tree-indent"><span class="tree-dir">server/</span></span>
+      <span class="tree-indent2"><span class="tree-file">index.js</span> <span class="tree-comment">← Express API, routes, DB setup</span></span>
+      <span class="tree-indent"><span class="tree-dir">src/</span></span>
+      <span class="tree-indent2"><span class="tree-dir">components/</span>  <span class="tree-comment">← Reusable UI components</span></span>
+      <span class="tree-indent2"><span class="tree-dir">pages/</span>       <span class="tree-comment">← Route-level page components</span></span>
+      <span class="tree-indent2"><span class="tree-dir">store/</span>       <span class="tree-comment">← Zustand state slices</span></span>
+      <span class="tree-indent2"><span class="tree-dir">hooks/</span>       <span class="tree-comment">← Custom React hooks</span></span>
+      <span class="tree-indent2"><span class="tree-dir">lib/</span>         <span class="tree-comment">← Utilities, API client</span></span>
+      <span class="tree-indent2"><span class="tree-dir">types/</span>       <span class="tree-comment">← Shared TS interfaces & enums</span></span>
+      <span class="tree-indent2"><span class="tree-file">App.tsx</span>      <span class="tree-comment">← Root component</span></span>
+      <span class="tree-indent2"><span class="tree-file">main.tsx</span>     <span class="tree-comment">← Entry point</span></span>
+      <span class="tree-indent"><span class="tree-file">vite.config.ts</span>   <span class="tree-comment">← Vite + React Compiler</span></span>
+      <span class="tree-indent"><span class="tree-file">tailwind.config.js</span> <span class="tree-comment">← Design tokens & theme</span></span>
+      <span class="tree-indent"><span class="tree-file">package.json</span></span>
+    </div>
+  </section>
+
+  <!-- ── MEMORY TYPES ── -->
+  <section class="section reveal" id="memory-types">
+    <div class="section-label">06 · Memory Types</div>
+    <h2>The Seven Memory Types</h2>
+    <p>MemoryOS uses a semantic color system to visually distinguish categories of memory at a glance. Each type has a dedicated color token in the Tailwind config.</p>
+    <div class="memory-grid">
+      <div class="memory-card" data-type="commitment">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--commitment)"></span>
+          <span class="memory-type">Commitment</span>
+          <span class="memory-hex">#f59e0b</span>
+        </div>
+        <p class="memory-desc">Promises made to yourself or others that need to be honored.</p>
+      </div>
+      <div class="memory-card" data-type="person">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--person)"></span>
+          <span class="memory-type">Person</span>
+          <span class="memory-hex">#0ea5e9</span>
+        </div>
+        <p class="memory-desc">Memories tied to significant people in your life.</p>
+      </div>
+      <div class="memory-card" data-type="emotion">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--emotion)"></span>
+          <span class="memory-type">Emotion</span>
+          <span class="memory-hex">#f43f5e</span>
+        </div>
+        <p class="memory-desc">Felt experiences and emotional states worth remembering.</p>
+      </div>
+      <div class="memory-card" data-type="pattern">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--pattern)"></span>
+          <span class="memory-type">Pattern</span>
+          <span class="memory-hex">#a855f7</span>
+        </div>
+        <p class="memory-desc">Recurring themes, habits, and behavioral loops you've noticed.</p>
+      </div>
+      <div class="memory-card" data-type="event">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--event)"></span>
+          <span class="memory-type">Event</span>
+          <span class="memory-hex">#22c55e</span>
+        </div>
+        <p class="memory-desc">Significant moments and milestones that shaped your path.</p>
+      </div>
+      <div class="memory-card" data-type="unresolved">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--unresolved)"></span>
+          <span class="memory-type">Unresolved</span>
+          <span class="memory-hex">#f97316</span>
+        </div>
+        <p class="memory-desc">Open threads and loose ends that are still on your mind.</p>
+      </div>
+      <div class="memory-card" data-type="insight">
+        <div class="memory-top">
+          <span class="memory-dot" style="background:var(--insight)"></span>
+          <span class="memory-type">Insight</span>
+          <span class="memory-hex">#14b8a6</span>
+        </div>
+        <p class="memory-desc">Realizations, learnings, and moments of clarity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SCRIPTS ── -->
+  <section class="section reveal" id="scripts">
+    <div class="section-label">07 · Scripts</div>
+    <h2>Scripts Reference</h2>
+    <table class="scripts-table">
+      <thead>
+        <tr>
+          <th>Script</th>
+          <th>Command</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Dev (frontend)</td>
+          <td><code>npm run dev</code></td>
+          <td>Start Vite dev server with HMR</td>
+        </tr>
+        <tr>
+          <td>Dev (full stack)</td>
+          <td><code>npm run dev:full</code></td>
+          <td>Start Express + Vite concurrently</td>
+        </tr>
+        <tr>
+          <td>Backend only</td>
+          <td><code>npm run server</code></td>
+          <td>Start Express API server</td>
+        </tr>
+        <tr>
+          <td>Build</td>
+          <td><code>npm run build</code></td>
+          <td>Type-check and bundle for production</td>
+        </tr>
+        <tr>
+          <td>Preview</td>
+          <td><code>npm run preview</code></td>
+          <td>Preview the production build locally</td>
+        </tr>
+        <tr>
+          <td>Lint</td>
+          <td><code>npm run lint</code></td>
+          <td>Run ESLint across all source files</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── CONTRIBUTING ── -->
+  <section class="section reveal" id="contributing">
+    <div class="section-label">08 · Contributing</div>
+    <h2>Contributing</h2>
+    <p>Contributions are welcome! Here's how to get involved:</p>
+    <div class="contribute-grid">
+      <div class="contribute-step">
+        <span class="contribute-n">01</span>
+        <div>
+          <h3>Fork the repo</h3>
+          <p>Click Fork on GitHub to create your own copy of the project.</p>
+        </div>
+      </div>
+      <div class="contribute-step">
+        <span class="contribute-n">02</span>
+        <div>
+          <h3>Create a branch</h3>
+          <p><code style="font-family:monospace;font-size:12px;color:var(--accent2)">git checkout -b feature/your-feature</code></p>
+        </div>
+      </div>
+      <div class="contribute-step">
+        <span class="contribute-n">03</span>
+        <div>
+          <h3>Commit your changes</h3>
+          <p>Use conventional commits: <code style="font-family:monospace;font-size:12px;color:var(--accent2)">feat:</code>, <code style="font-family:monospace;font-size:12px;color:var(--accent2)">fix:</code>, <code style="font-family:monospace;font-size:12px;color:var(--accent2)">chore:</code></p>
+        </div>
+      </div>
+      <div class="contribute-step">
+        <span class="contribute-n">04</span>
+        <div>
+          <h3>Open a Pull Request</h3>
+          <p>Push your branch and open a PR. Ensure <code style="font-family:monospace;font-size:12px;color:var(--accent2)">npm run lint</code> passes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer reveal">
+    <div class="footer-logo">MemoryOS</div>
+    <p>Built with ❤️ for <a href="https://github.com/harshwardhan1507/Hackathon-verge">Hackathon Verge</a> · MIT License</p>
+    <p style="margin-top:8px"><a href="https://github.com/harshwardhan1507/Hackathon-verge/issues">Report a Bug</a> · <a href="https://github.com/harshwardhan1507/Hackathon-verge/issues">Request a Feature</a></p>
+  </footer>
+
+</div>
+
+<script>
+// ── PARTICLE CANVAS ──
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const colors = ['#7c6af7','#4f9ef5','#f59e0b','#f43f5e','#22c55e','#a855f7','#14b8a6','#f97316'];
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.size = Math.random() * 1.5 + 0.3;
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = (Math.random() - 0.5) * 0.3;
+    this.life = 0;
+    this.maxLife = Math.random() * 200 + 100;
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy; this.life++;
+    if (this.life > this.maxLife) this.reset();
+  }
+  draw() {
+    const alpha = Math.sin((this.life / this.maxLife) * Math.PI);
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = this.color + Math.floor(alpha * 255).toString(16).padStart(2,'0');
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+
+  // Draw faint connection lines
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 80) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(124,106,247,${(1 - dist/80) * 0.12})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
