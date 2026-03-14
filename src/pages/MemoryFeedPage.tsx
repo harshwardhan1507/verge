@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MemoryCard } from '../components/MemoryCard';
 import { useMemoryStore, type MemoryType } from '../store/memoryStore';
 import { cn } from '../lib/utils';
@@ -79,14 +80,24 @@ export function MemoryFeedPage() {
       {/* Memory List */}
       <div className="space-y-3">
         {filteredMemories.length > 0 ? (
-          filteredMemories.map((memory, index) => (
-            <MemoryCard
-              key={memory.id}
-              memory={memory}
-              onMarkResolved={markResolved}
-              animationDelay={index * 30}
-            />
-          ))
+          <AnimatePresence>
+            {filteredMemories.map((memory, index) => (
+              <motion.div
+                key={memory.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <MemoryCard
+                  memory={memory}
+                  onMarkResolved={markResolved}
+                  animationDelay={index * 30}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         ) : (
           <div className="text-center py-12 text-text-muted">
             <p className="text-sm">

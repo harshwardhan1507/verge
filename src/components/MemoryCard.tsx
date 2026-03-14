@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { TagPill } from './TagPill';
 import { formatRelativeTime, cn } from '../lib/utils';
-import type { Memory } from '../store/memoryStore';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-import type { MemoryType } from '../store/memoryStore';
+import type { Memory, MemoryType } from '../store/memoryStore';
+import { useMemoryStore } from '../store/memoryStore';
+import { Check, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 
 interface MemoryCardProps {
   memory: Memory;
@@ -15,22 +15,22 @@ interface MemoryCardProps {
 
 // Left accent bar color per memory type
 const accentColor: Record<MemoryType, string> = {
-  EVENT:      'bg-blue-500',
-  EMOTION:    'bg-orange-400',
-  COMMITMENT: 'bg-violet-500',
+  EVENT:      'bg-teal-500',
+  EMOTION:    'bg-rose-500',
+  COMMITMENT: 'bg-amber-500',
   UNRESOLVED: 'bg-yellow-400',
-  INSIGHT:    'bg-teal-400',
+  INSIGHT:    'bg-violet-500',
   PATTERN:    'bg-pink-500',
   PERSON:     'bg-sky-400',
 };
 
 // Initials avatar bg per memory type
 const avatarColor: Record<MemoryType, string> = {
-  EVENT:      'bg-blue-500/15 text-blue-400',
-  EMOTION:    'bg-orange-500/15 text-orange-400',
-  COMMITMENT: 'bg-violet-500/15 text-violet-400',
+  EVENT:      'bg-teal-500/15 text-teal-400',
+  EMOTION:    'bg-rose-500/15 text-rose-400',
+  COMMITMENT: 'bg-amber-500/15 text-amber-400',
   UNRESOLVED: 'bg-yellow-500/15 text-yellow-400',
-  INSIGHT:    'bg-teal-500/15 text-teal-400',
+  INSIGHT:    'bg-violet-500/15 text-violet-400',
   PATTERN:    'bg-pink-500/15 text-pink-400',
   PERSON:     'bg-sky-500/15 text-sky-400',
 };
@@ -44,6 +44,7 @@ export function MemoryCard({
 }: MemoryCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const deleteMemory = useMemoryStore((state) => state.deleteMemory);
 
   const isLongContent = memory.content.length > 200;
   const shouldTruncate = !expanded && isLongContent;
@@ -74,11 +75,23 @@ export function MemoryCard({
       {/* Card content */}
       <div className="flex-1 px-4 py-3.5">
         {/* Header row */}
-        <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-2">
           <TagPill type={memory.type} />
-          <span className="text-[11px] text-white/25 shrink-0 tabular-nums">
-            {formatRelativeTime(memory.timestamp)}
-          </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-[11px] text-white/25 shrink-0 tabular-nums">
+              {formatRelativeTime(memory.timestamp)}
+            </span>
+            <button
+              onClick={() => {
+                if (window.confirm('Delete this memory?')) {
+                  deleteMemory(memory.id);
+                }
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-colors duration-150 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-md p-1"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}

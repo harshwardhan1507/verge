@@ -3,8 +3,9 @@ import { MemoryCard } from '../components/MemoryCard';
 import { useMemoryStore, type MemoryType } from '../store/memoryStore';
 
 export function HomePage() {
-  const { addMemory, getRecentMemories } = useMemoryStore();
-  const recentMemories = getRecentMemories(5);
+  const addMemory = useMemoryStore((state) => state.addMemory);
+  const memories = useMemoryStore((state) => state.memories);
+  const recentMemories = memories.slice(0, 5);
 
   const handleAddMemory = (content: string, type: MemoryType, relatedPerson?: string) => {
     addMemory(content, type, relatedPerson);

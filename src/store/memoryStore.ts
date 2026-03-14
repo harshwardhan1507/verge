@@ -65,6 +65,7 @@ interface MemoryStore {
   // Actions
   addMemory: (content: string, type: MemoryType, relatedPerson?: string) => void;
   markResolved: (id: string) => void;
+  deleteMemory: (id: string) => void;
   addUpdate: (threadId: string, update: string) => void;
   getRecentMemories: (count: number) => Memory[];
   getMemoriesByType: (type: MemoryType | 'ALL') => Memory[];
@@ -169,6 +170,21 @@ export const useMemoryStore = create<MemoryStore>((set, get) => ({
         if (error) throw error;
       } catch (err) {
         console.error('Failed to update memory in Supabase:', err);
+      }
+    }
+  },
+
+  deleteMemory: async (id: string) => {
+    set((state) => ({
+      memories: state.memories.filter((m) => m.id !== id),
+    }));
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase.from('memories').delete().eq('id', id);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Failed to delete memory from Supabase:', err);
       }
     }
   },
