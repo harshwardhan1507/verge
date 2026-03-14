@@ -62,7 +62,7 @@ You can help with:
         });
       }
     }
-    
+
     // Add the latest user message with system instructions
     contents.push({
       role: 'user',
@@ -75,7 +75,7 @@ You can help with:
     res.setHeader('Connection', 'keep-alive');
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,13 +84,13 @@ You can help with:
     );
 
     const data = await response.json();
-    
+
     if (!response.ok) {
-       throw new Error(data.error?.message || 'Error from Gemini API');
+      throw new Error(data.error?.message || 'Error from Gemini API');
     }
 
     const reply = data.candidates[0].content.parts[0].text;
-    
+
     // Write the result in the expected stream format
     res.write(`data: ${JSON.stringify({ text: reply })}\n\n`);
     res.write(`data: [DONE]\n\n`);
