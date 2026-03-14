@@ -12,6 +12,8 @@ import { AIChat } from './components/AIChat';
 import DemoPage from './pages/DemoPage';
 import { useMemoryStore } from './store/memoryStore';
 import { isSupabaseConfigured } from './lib/supabase';
+import { useAuth } from './hooks/useAuth';
+import { AuthScreen } from './components/AuthScreen';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -26,10 +28,27 @@ function ScrollToTop() {
 function App() {
   const initialize = useMemoryStore(state => state.initialize);
   const error = useMemoryStore(state => state.error);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
+    if (user || !isSupabaseConfigured) {
+      // If no supabase is configured, we probably still want them to log in before initializing,
+      // but let's just initialize if user is logged in.
+      initialize();
+    }
+  }, [initialize, user]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center text-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
 
   return (
     <BrowserRouter>
