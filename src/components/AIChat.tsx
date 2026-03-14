@@ -121,8 +121,8 @@ export function AIChat({ memories }: AIChatProps) {
               const data = JSON.parse(line.replace('data: ', ''));
               if (data.error) {
                 // If the stream returns an error payload
-                if (data.error.includes('apiKey')) {
-                   throw new Error('OpenAI API key is missing or invalid. Please add OPENAI_API_KEY to your .env file and restart the server.');
+                if (data.error.includes('apiKey') || data.error.includes('key')) {
+                   throw new Error('Gemini API key is missing or invalid. Please add GEMINI_API_KEY to your .env file and restart the server.');
                 }
                 throw new Error(data.error);
               }

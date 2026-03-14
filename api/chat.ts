@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+// No external imports needed for fetch
 
 // This is the Vercel Serverless Function entrypoint
 export default async function handler(req: any, res: any) {
@@ -28,21 +28,7 @@ export default async function handler(req: any, res: any) {
       `[${m.type?.toUpperCase() || 'MEMORY'} - ${new Date(m.created_at || m.timestamp || Date.now()).toLocaleDateString()}]: ${m.content}`
     ).join('\n') || 'No memories yet.';
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    // Set SSE headers for streaming
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-
-    const stream = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      max_tokens: 1024,
-      stream: true,
-      messages: [
-        {
-          role: 'system',
-          content: `You are Verge, a warm and deeply personal AI second brain assistant for ${userName || 'the user'}.
+    const systemPrompt = `You are Verge, a warm and deeply personal AI second brain assistant for ${userName || 'the user'}.
 
 You have access to their personal memories, thoughts, emotions, and commitments stored below.
 Use this context to give personalized, insightful responses. Reference specific memories when relevant.
@@ -64,20 +50,49 @@ You can help with:
 - Pattern spotting ("what do I keep worrying about?")
 - Thought organization ("help me think through X")
 - Commitment tracking ("what have I committed to?")
-- People insights ("what's going on with [person]?")`
-        },
-        ...(conversationHistory || []),
-        { role: 'user', content: message }
-      ]
-    });
+- People insights ("what's going on with [person]?")`;
 
-    for await (const chunk of stream) {
-      const text = chunk.choices[0]?.delta?.content || '';
-      if (text) {
-        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+    // Map history to Gemini format
+    const contents = [];
+    if (conversationHistory && conversationHistory.length > 0) {
+      for (const msg of conversationHistory) {
+        contents.push({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        });
       }
     }
     
+    // Add the latest user message with system instructions
+    contents.push({
+      role: 'user',
+      parts: [{ text: `[SYSTEM INSTRUCTIONS]:\n${systemPrompt}\n\n[USER MESSAGE]:\n${message}` }]
+    });
+
+    // Set SSE headers for streaming compatibility
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents })
+      }
+    );
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+       throw new Error(data.error?.message || 'Error from Gemini API');
+    }
+
+    const reply = data.candidates[0].content.parts[0].text;
+    
+    // Write the result in the expected stream format
+    res.write(`data: ${JSON.stringify({ text: reply })}\n\n`);
     res.write(`data: [DONE]\n\n`);
     res.end();
 
