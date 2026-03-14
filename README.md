@@ -35,7 +35,7 @@
 
 <br/>
 
-[**🚀 Live Demo**](#) · [**🐛 Report a Bug**](https://github.com/harshwardhan1507/Hackathon-verge/issues) · [**✨ Request a Feature**](https://github.com/harshwardhan1507/Hackathon-verge/issues)
+[**🚀 Live Demo**](https://verge-eosin.vercel.app/) · [**🐛 Report a Bug**](https://github.com/harshwardhan1507/Hackathon-verge/issues) · [**✨ Request a Feature**](https://github.com/harshwardhan1507/Hackathon-verge/issues)
 
 <br/>
 
@@ -73,7 +73,7 @@ Memories are not just *"notes."* They are typed and color-coded across **seven m
 | 🟠 | **Unresolved** | Open threads and things left undone |
 | 🩵 | **Insight** | Realizations, learnings, and clarity |
 
-Built in **under 48 hours** as a hackathon project, MemoryOS combines a high-performance React frontend with a lightweight Node.js/SQLite backend — easy to self-host with zero external database dependencies.
+Built in **under 36 hours** as a hackathon project, MemoryOS combines a high-performance React frontend with a lightweight Node.js/SQLite backend — easy to self-host with zero external database dependencies.
 
 ---
 
