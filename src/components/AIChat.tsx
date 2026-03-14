@@ -122,7 +122,7 @@ export function AIChat({ memories }: AIChatProps) {
               if (data.error) {
                 // If the stream returns an error payload
                 if (data.error.includes('apiKey')) {
-                   throw new Error('Anthropic API key is missing or invalid. Please add ANTHROPIC_API_KEY to your .env file and restart the server.');
+                   throw new Error('OpenAI API key is missing or invalid. Please add OPENAI_API_KEY to your .env file and restart the server.');
                 }
                 throw new Error(data.error);
               }
