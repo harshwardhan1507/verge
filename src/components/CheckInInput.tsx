@@ -9,6 +9,8 @@ interface CheckInInputProps {
 
 // Removed unused auto-detection constants and functions
 
+import { extractPeople } from '../lib/memoryUtils';
+
 export function CheckInInput({ onSubmit }: CheckInInputProps) {
   const [content, setContent] = useState('');
   const [interimContent, setInterimContent] = useState('');
@@ -29,20 +31,16 @@ export function CheckInInput({ onSubmit }: CheckInInputProps) {
     { type: 'INSIGHT', label: 'Thought', activeClass: 'bg-violet-500 text-white border-violet-500', inactiveClass: 'text-violet-500/70 border-violet-500/30 hover:bg-violet-500/10' },
   ];
 
-  // Detect person only
+  // Detect people using robust regex engine
   useEffect(() => {
     const full = content + (interimContent ? ` ${interimContent}` : '');
-    const lower = full.toLowerCase();
-    const personKeywords = ['aryan', 'dad', 'mom', 'manager', 'sarah', 'john', 'mike', 'boss', 'friend'];
-    let foundPerson: string | undefined;
-    
-    for (const p of personKeywords) {
-      if (lower.includes(p)) {
-        foundPerson = p.charAt(0).toUpperCase() + p.slice(1);
-        break;
-      }
+    const people = extractPeople(full);
+    if (people.length > 0) {
+       // Join multiple detected people for the preview pill, but it gets saved as a string in store
+       setDetectedPerson(people.join(', '));
+    } else {
+       setDetectedPerson(undefined);
     }
-    setDetectedPerson(foundPerson);
   }, [content, interimContent]);
 
   // Auto-grow textarea

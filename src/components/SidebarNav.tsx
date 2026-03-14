@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { Home, Brain, Users, TrendingUp, AlertCircle, Menu, X } from 'lucide-react';
+import { Home, Brain, Users, TrendingUp, AlertCircle, Menu, X, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 const navItems = [
+  { to: '/chat', icon: MessageSquare, label: 'AI Chat' },
   { to: '/', icon: Home, label: 'Check-in' },
   { to: '/feed', icon: Brain, label: 'Memory Feed' },
   { to: '/people', icon: Users, label: 'People' },

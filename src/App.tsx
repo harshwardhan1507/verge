@@ -8,6 +8,7 @@ import { MemoryFeedPage } from './pages/MemoryFeedPage';
 import { PeoplePage } from './pages/PeoplePage';
 import { PatternsPage } from './pages/PatternsPage';
 import { UnresolvedPage } from './pages/UnresolvedPage';
+import { AIChat } from './components/AIChat';
 import DemoPage from './pages/DemoPage';
 import { useMemoryStore } from './store/memoryStore';
 import { isSupabaseConfigured } from './lib/supabase';
@@ -52,6 +53,8 @@ function App() {
 }
 
 function MainLayout() {
+  const memories = useMemoryStore(state => state.memories);
+
   return (
     <div className="min-h-screen bg-background flex">
       <SidebarNav />
@@ -61,6 +64,7 @@ function MainLayout() {
         <div className="max-w-3xl mx-auto">
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/chat" element={<AIChat memories={memories} />} />
             <Route path="/feed" element={<MemoryFeedPage />} />
             <Route path="/people" element={<PeoplePage />} />
             <Route path="/patterns" element={<PatternsPage />} />

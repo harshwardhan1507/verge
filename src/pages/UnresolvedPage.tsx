@@ -1,186 +1,152 @@
-import { useState } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
-import { AlertCircle, Check, Plus, X, Clock } from 'lucide-react';
-import { useMemoryStore } from '../store/memoryStore';
-import { cn, getTimeSince } from '../lib/utils';
+import { useMemo } from 'react';
+import { Check, MessageSquare } from 'lucide-react';
+import { useMemoryStore, type Memory } from '../store/memoryStore';
+import { cn, formatRelativeTime } from '../lib/utils';
+import { TagPill } from '../components/TagPill';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function UnresolvedPage() {
-  const { unresolvedThreads, addUpdate, markResolved, memories } = useMemoryStore();
-  const [isAddUpdateOpen, setIsAddUpdateOpen] = useState(false);
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
-  const [updateText, setUpdateText] = useState('');
+  const memories = useMemoryStore((state) => state.memories);
+  const isLoading = useMemoryStore((state) => state.isLoading);
+  const markResolved = useMemoryStore((state) => state.markResolved);
 
-  // Sort by oldest first
-  const sortedThreads = [...unresolvedThreads].sort(
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-  );
+  const unresolved = useMemo(() =>
+    memories.filter(m => 
+      (m.type === 'EMOTION' || m.type === 'COMMITMENT') && 
+      !m.resolved
+    ).sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    )
+  , [memories]);
 
-  const handleAddUpdate = () => {
-    if (!selectedThreadId || !updateText.trim()) return;
-    addUpdate(selectedThreadId, updateText.trim());
-    setUpdateText('');
-    setIsAddUpdateOpen(false);
-    setSelectedThreadId(null);
+  const resolvedCount = useMemo(() => 
+    memories.filter(m => m.resolved).length
+  , [memories]);
+
+  const emotionCount = unresolved.filter(m => m.type === 'EMOTION').length;
+  const commitmentCount = unresolved.filter(m => m.type === 'COMMITMENT').length;
+
+  const handleResolve = async (memory: Memory) => {
+    markResolved(memory.id);
   };
 
-  const openAddUpdate = (threadId: string) => {
-    setSelectedThreadId(threadId);
-    setIsAddUpdateOpen(true);
+  const handleProcess = (memory: Memory) => {
+    // Navigate to Chat or trigger a global event for the chat interface
+    alert(`Help me process this: ${memory.content}`);
   };
 
-  const getRelatedMemories = (threadId: string) => {
-    const thread = unresolvedThreads.find(t => t.id === threadId);
-    if (!thread) return [];
-    return memories.filter(m => thread.relatedMemoryIds.includes(m.id));
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-fade-in">
+          <h1 className="text-2xl font-semibold text-text-primary mb-1">Unresolved</h1>
+          <p className="text-sm text-text-muted">Loading threads...</p>
+        </div>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse h-32 bg-memory-surface rounded-xl border border-white/5" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="animate-fade-in">
-        <h1 className="text-2xl font-semibold text-text-primary mb-1">
-          Unresolved
-        </h1>
-        <p className="text-sm text-text-muted">
-          Threads that need your attention
-        </p>
+      <div className="animate-fade-in flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary mb-1">
+            Unresolved
+          </h1>
+          <p className="text-sm text-text-muted">
+            Memories and commitments needing attention
+          </p>
+        </div>
+
+        {/* Count Badges */}
+        {unresolved.length > 0 && (
+          <div className="flex gap-2">
+            {commitmentCount > 0 && (
+              <span className="text-xs px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">
+                {commitmentCount} Commitments pending
+              </span>
+            )}
+            {emotionCount > 0 && (
+              <span className="text-xs px-3 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full">
+                {emotionCount} Emotions to process
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Threads List */}
-      {sortedThreads.length > 0 ? (
-        <div className="space-y-4">
-          {sortedThreads.map((thread, index) => (
-            <div
-              key={thread.id}
-              className={cn(
-                'bg-surface rounded-lg border border-white/5 p-4 animate-fade-in',
-                thread.id.startsWith('thread1') || thread.id.startsWith('thread3')
-                  ? 'border-commitment/20'
-                  : 'border-unresolved/20'
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-text-muted" />
-                  <span className="text-xs text-text-muted">
-                    {getTimeSince(thread.createdAt)}
-                  </span>
-                </div>
-                <span className={cn(
-                  'text-xs px-2 py-0.5 rounded-full',
-                  thread.id.startsWith('thread1') || thread.id.startsWith('thread3')
-                    ? 'bg-commitment/10 text-commitment'
-                    : 'bg-unresolved/10 text-unresolved'
-                )}>
-                  {thread.id.startsWith('thread1') || thread.id.startsWith('thread3')
-                    ? 'Commitment'
-                    : 'Unresolved'}
-                </span>
-              </div>
-
-              <p className="text-sm text-text-primary mb-3">
-                {thread.originalText}
-              </p>
-
-              {/* Updates */}
-              {thread.updates.length > 0 && (
-                <div className="mb-3 pl-3 border-l-2 border-white/10 space-y-2">
-                  {thread.updates.map((update, i) => (
-                    <p key={i} className="text-xs text-text-muted">
-                      • {update}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {/* Related Memories */}
-              {getRelatedMemories(thread.id).length > 0 && (
-                <div className="mb-3">
-                  <p className="text-xs text-text-muted mb-2">
-                    Related memories: {getRelatedMemories(thread.id).length}
-                  </p>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => openAddUpdate(thread.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-text-muted hover:text-text-primary hover:bg-white/10 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Update
-                </button>
-                <button
-                  onClick={() => {
-                    const relatedMemories = getRelatedMemories(thread.id);
-                    relatedMemories.forEach(m => markResolved(m.id));
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-event/10 text-event hover:bg-event/20 transition-colors"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  Mark Resolved
-                </button>
-              </div>
-            </div>
-          ))}
+      {unresolved.length === 0 && !isLoading ? (
+        <div className="text-center py-16 bg-memory-surface/30 rounded-xl border border-white/5 animate-fade-in">
+          <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-500" />
+          </div>
+          <h3 className="text-lg font-medium text-white mb-1">All clear! Nothing unresolved.</h3>
+          <p className="text-sm text-memory-muted">{resolvedCount} memories resolved so far.</p>
         </div>
       ) : (
-        <div className="text-center py-12 text-text-muted">
-          <AlertCircle className="w-12 h-12 mx-auto mb-4 text-event opacity-50" />
-          <p className="text-sm">No unresolved threads</p>
-          <p className="text-xs mt-1">Nice work! Everything is taken care of.</p>
-        </div>
-      )}
-
-      {/* Add Update Dialog */}
-      <Dialog.Root open={isAddUpdateOpen} onOpenChange={setIsAddUpdateOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-surface rounded-xl border border-white/10 p-6 z-50 animate-fade-in">
-            <Dialog.Title className="text-lg font-semibold text-text-primary mb-4">
-              Add Update
-            </Dialog.Title>
-
-            <textarea
-              value={updateText}
-              onChange={(e) => setUpdateText(e.target.value)}
-              placeholder="What's new with this?"
-              className="w-full bg-background border border-white/10 rounded-lg p-3 text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:border-accent/20 resize-none min-h-[100px]"
-            />
-
-            <div className="flex justify-end gap-2 mt-4">
-              <Dialog.Close asChild>
-                <button className="px-4 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors">
-                  Cancel
-                </button>
-              </Dialog.Close>
-              <button
-                onClick={handleAddUpdate}
-                disabled={!updateText.trim()}
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+          <AnimatePresence mode="popLayout">
+            {unresolved.map((memory, index) => (
+              <motion.div
+                key={memory.id}
+                layout
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, delay: Math.min(index * 0.05, 0.2) }}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                  updateText.trim()
-                    ? 'bg-accent text-white hover:bg-accent/90'
-                    : 'bg-white/5 text-text-muted cursor-not-allowed'
+                  'bg-memory-card border border-memory-surface rounded-xl p-4',
+                  'border-l-4 transition-all hover:bg-white/[0.02]',
+                  memory.type === 'EMOTION' ? 'border-l-rose-500' : 'border-l-amber-500'
                 )}
               >
-                Add Update
-              </button>
-            </div>
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <span className="text-sm font-medium text-white line-clamp-1">
+                    {memory.content.substring(0, 40) || 'Untitled'}
+                  </span>
+                  <span className="text-[11px] text-text-muted shrink-0 whitespace-nowrap">
+                    {formatRelativeTime(new Date(memory.timestamp))}
+                  </span>
+                </div>
 
-            <Dialog.Close asChild>
-              <button
-                className="absolute top-4 right-4 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </Dialog.Close>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+                <p className="text-xs text-text-muted mb-4 line-clamp-2 min-h-[32px]">
+                  {memory.content.length > 40 ? memory.content.substring(40, 100) + '...' : memory.content}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  {/* Left: Type tag */}
+                  <TagPill type={memory.type} />
+                  
+                  {/* Right: Actions */}
+                  {memory.type === 'COMMITMENT' ? (
+                    <button
+                      onClick={() => handleResolve(memory)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-text-muted hover:text-green-400 hover:bg-green-500/10 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Mark as done
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleProcess(memory)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Process this
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
